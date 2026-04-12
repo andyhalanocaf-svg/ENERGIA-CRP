@@ -10,7 +10,6 @@ import {
 import { MONTHS_ES, EXECUTION_STATUS_LABELS, EXECUTION_STATUS_COLORS } from "@/lib/constants"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import {
 import { ArrowLeft, ArrowRight, TrendingUp, TrendingDown, DollarSign, Target, Activity, AlertTriangle, FileSpreadsheet } from "lucide-react"
 import { ExecutionTable, type TableItem } from "./execution-table"
 
@@ -57,9 +56,9 @@ async function getMonthlyData(year: number, month: number) {
     (executions ?? []).map(e => [e.budget_line_id, e])
   )
 
-  const tableItems: TableItem[] = budgetLines.map(line => {
+  const tableItems: TableItem[] = (budgetLines as any[]).map(line => {
     const exec = execMap.get(line.id)
-    const budgeted = (line[monthField as keyof typeof line] as number) ?? 0
+    const budgeted = (line[monthField] as number) ?? 0
 
     return {
       budget_line_id: line.id,
@@ -75,9 +74,9 @@ async function getMonthlyData(year: number, month: number) {
   })
 
   // We maintain legacy "partidas" format for some existing metric calculations below
-  const partidas = budgetLines.map(line => {
+  const partidas = (budgetLines as any[]).map(line => {
     const exec = execMap.get(line.id)
-    const budgeted = (line[monthField as keyof typeof line] as number) ?? 0
+    const budgeted = (line[monthField] as number) ?? 0
     const executed = exec?.executed_amount ?? 0
     const projected = exec?.projected_amount ?? 0
     const savings = exec?.savings_amount ?? 0
@@ -124,6 +123,8 @@ async function getMonthlyData(year: number, month: number) {
       executionRate: initialBudget > 0 ? ((willExecute / initialBudget) * 100) : 0
     }
   }).sort((a, b) => b.willExecute - a.willExecute)
+
+  const reprogramaciones = partidas.filter(p => p.status === "rescheduled")
 
   return {
     partidas,

@@ -73,7 +73,7 @@ export default async function KnowledgeBasePage() {
 
             {docs && docs.length > 0 ? (
               <div className="divide-y divide-border">
-                {docs.map((doc: KbDocument) => (
+                {docs.map((doc: any) => (
                   <div key={doc.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/20 transition-colors">
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
                       <FileText className="h-4 w-4 text-primary" />
