@@ -40,8 +40,8 @@ export async function GET(
 
   const execMap = new Map((executions ?? []).map(e => [e.budget_line_id, e]))
 
-  const partidas = (lines ?? []).map(line => {
-    const budgeted = ((line as Record<string, number>)[monthField]) ?? 0
+  const partidas = ((lines as any[]) ?? []).map(line => {
+    const budgeted = (line[monthField] as number) ?? 0
     const exec = execMap.get(line.id)
     return {
       partida: line.partida,
