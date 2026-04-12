@@ -71,7 +71,7 @@ export default async function DashboardLayout({
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar userRole={safeProfile.role as UserRole} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header profile={safeProfile as NonNullable<typeof profile>} />
+        <Header profile={safeProfile as any} />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>

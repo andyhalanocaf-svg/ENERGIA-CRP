@@ -430,3 +430,15 @@ function KpiCard({
     </div>
   )
 }
+
+function CheckIcon() {
+  return (
+    <div className="h-3.5 w-3.5 bg-emerald-500 text-white rounded flex flex-shrink-0 items-center justify-center">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    </div>
+  )
+}
+
+function CircleIcon({color}: {color: string}) {
+  return <div className={`h-3.5 w-3.5 rounded-full bg-${color}-500 flex flex-shrink-0 items-center justify-center`} />
+}

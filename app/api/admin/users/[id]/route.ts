@@ -31,12 +31,12 @@ export async function PATCH(
 
   if ("role" in b) {
     const parsed = updateUserRoleSchema.safeParse(b)
-    if (!parsed.success) return apiError(parsed.error.errors[0].message, 422)
+    if (!parsed.success) return apiError((parsed.error as any).issues?.[0]?.message || "Rol inválido", 422)
     updateData.role = parsed.data.role
   }
   if ("is_active" in b) {
     const parsed = updateUserStatusSchema.safeParse(b)
-    if (!parsed.success) return apiError(parsed.error.errors[0].message, 422)
+    if (!parsed.success) return apiError((parsed.error as any).issues?.[0]?.message || "Estado inválido", 422)
     updateData.is_active = parsed.data.is_active
   }
 

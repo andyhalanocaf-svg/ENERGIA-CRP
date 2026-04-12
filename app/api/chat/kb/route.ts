@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   try { body = await request.json() } catch { return apiError("JSON inválido", 400) }
 
   const parsed = kbDocumentSchema.safeParse(body)
-  if (!parsed.success) return apiError(parsed.error.errors[0].message, 422)
+  if (!parsed.success) return apiError((parsed.error as any).issues?.[0]?.message || "Datos inválidos", 422)
 
   const { title, content, category, tags } = parsed.data
   const adminClient = createAdminClient()

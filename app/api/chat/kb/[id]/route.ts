@@ -23,7 +23,7 @@ export async function PATCH(
   try { body = await request.json() } catch { return apiError("JSON inválido", 400) }
 
   const parsed = updateKbDocumentSchema.safeParse(body)
-  if (!parsed.success) return apiError(parsed.error.errors[0].message, 422)
+  if (!parsed.success) return apiError((parsed.error as any).issues?.[0]?.message || "Datos inválidos", 422)
 
   const adminClient = createAdminClient()
   const { data: existing } = await adminClient
