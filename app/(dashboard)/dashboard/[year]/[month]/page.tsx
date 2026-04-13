@@ -65,11 +65,17 @@ async function getMonthlyData(year: number, month: number) {
       cost_center_id: line.cost_center_id,
       partida: line.partida,
       responsible: line.responsible ?? "Sin asignar",
+      description: line.description ?? "-",
+      ciudad_planta: "Corporativo", // Pendiente de migración futura
       category: line.category as "A" | "B",
       budgeted,
       status: exec?.status ?? "pending",
       notes: exec?.notes ?? "",
       rescheduled_to_month: exec?.rescheduled_to_month ?? null,
+      validated_at: exec?.validated_at ? new Date(exec.validated_at).toLocaleDateString('es-PE') : null,
+      validated_by: exec?.validated_by ? "Usuario Validó" : null, // Idealmente haríamos join con profiles
+      status_adelanto: exec?.status === 'advance' ? "ADELANTO" : null,
+      mes_origen: exec?.rescheduled_from_month ?? null,
     }
   })
 

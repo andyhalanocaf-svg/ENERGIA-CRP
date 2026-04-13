@@ -13,10 +13,16 @@ export type TableItem = {
   category: "A" | "B"
   partida: string
   responsible: string
+  description: string
+  ciudad_planta: string
   budgeted: number
   status: string
   notes: string
   rescheduled_to_month: number | null
+  validated_at: string | null
+  validated_by: string | null
+  status_adelanto: string | null
+  mes_origen: number | null
 }
 
 export function ExecutionTable({ items, year, month }: { items: TableItem[], year: number, month: number }) {
@@ -94,38 +100,62 @@ export function ExecutionTable({ items, year, month }: { items: TableItem[], yea
         <table className="w-full text-sm">
           <thead className="sticky top-0 bg-muted/80 backdrop-blur z-10">
             <tr className="border-b border-border">
-              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Línea Presupuestal</th>
-              <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-32">Presup.</th>
-              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-40">Status</th>
-              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-36">Mes Reprogramado</th>
-              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground min-w-[200px]">Motivo de Variación</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-24">ID Línea</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Responsable</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Partida Presupuestal</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground min-w-[150px]">Detalle</th>
+              <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-28">Monto S/</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Ciudad/Planta</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-36">STATUS</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground w-32">Mes Reprogramado</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground min-w-[150px]">Motivo de Variación</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Fecha Validación</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Validado Por</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Status Adelanto</th>
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Mes Origen</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {rows.map((row, i) => (
               <tr key={row.budget_line_id} className="hover:bg-muted/10 transition-colors">
-                {/* Info Partida */}
+                {/* ID Línea */}
+                <td className="px-4 py-3 font-mono text-xs text-muted-foreground truncate max-w-[100px]" title={row.budget_line_id}>
+                  {row.budget_line_id.slice(0, 8)}...
+                </td>
+
+                {/* Responsable */}
+                <td className="px-4 py-3 text-xs text-foreground truncate max-w-[150px]">
+                  {row.responsible}
+                </td>
+
+                {/* Partida Presupuestal */}
                 <td className="px-4 py-3">
-                  <div className="flex flex-col gap-1">
-                     <div className="flex items-center gap-2">
-                      <span className={cn(
-                        "inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-bold shrink-0",
-                        row.category === "A" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
-                      )}>
-                        {row.category}
-                      </span>
-                      <span className="text-xs font-semibold text-foreground truncate max-w-[220px]">
-                        {row.partida}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground ml-6 truncate max-w-[220px]">
-                      {row.responsible}
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-bold shrink-0",
+                      row.category === "A" ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+                    )}>
+                      {row.category}
+                    </span>
+                    <span className="text-xs font-semibold text-foreground truncate max-w-[200px]" title={row.partida}>
+                      {row.partida}
                     </span>
                   </div>
                 </td>
 
+                {/* Detalle */}
+                <td className="px-4 py-3 text-xs text-muted-foreground truncate max-w-[200px]" title={row.description}>
+                  {row.description}
+                </td>
+
+                {/* Monto S/ */}
                 <td className="px-4 py-3 text-right font-mono text-xs font-semibold text-foreground finance-number">
                   {formatCurrency(row.budgeted, true)}
+                </td>
+
+                {/* Ciudad/Planta */}
+                <td className="px-4 py-3 text-xs text-muted-foreground">
+                  {row.ciudad_planta || "-"}
                 </td>
 
                 {/* Interactive Status */}
@@ -135,6 +165,7 @@ export function ExecutionTable({ items, year, month }: { items: TableItem[], yea
                       "w-full bg-transparent text-xs font-semibold text-foreground rounded-md border border-border px-2 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors",
                       row.status === "executed" && "text-emerald-400 border-emerald-500/30 bg-emerald-500/5",
                       row.status === "rescheduled" && "text-amber-400 border-amber-500/30 bg-amber-500/5",
+                      row.status === "advance" && "text-blue-400 border-blue-500/30 bg-blue-500/5",
                       row.status === "pending" && "text-muted-foreground"
                     )}
                     value={row.status}
@@ -143,6 +174,7 @@ export function ExecutionTable({ items, year, month }: { items: TableItem[], yea
                     <option className="text-foreground bg-card" value="pending">PENDIENTE</option>
                     <option className="text-foreground bg-card" value="executed">OK (EJECUTADO)</option>
                     <option className="text-foreground bg-card" value="rescheduled">REPROGRAMADO</option>
+                    <option className="text-foreground bg-card" value="advance">ADELANTO</option>
                     <option className="text-foreground bg-card" value="savings">AHORRO</option>
                   </select>
                 </td>
@@ -172,11 +204,31 @@ export function ExecutionTable({ items, year, month }: { items: TableItem[], yea
                     onChange={(e) => updateRow(i, { notes: e.target.value })}
                   />
                 </td>
+
+                {/* Fecha Validación */}
+                <td className="px-4 py-3 text-xs text-muted-foreground">
+                  {row.validated_at || "-"}
+                </td>
+
+                {/* Validado Por */}
+                <td className="px-4 py-3 text-xs text-muted-foreground truncate max-w-[120px]">
+                  {row.validated_by || "-"}
+                </td>
+
+                {/* Status Adelanto */}
+                <td className="px-4 py-3 text-xs text-muted-foreground">
+                  {row.status_adelanto || "-"}
+                </td>
+
+                {/* Mes Origen */}
+                <td className="px-4 py-3 text-xs text-muted-foreground">
+                  {row.mes_origen ? MONTHS_ES[row.mes_origen - 1] : "-"}
+                </td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                <td colSpan={13} className="py-8 text-center text-sm text-muted-foreground">
                   No hay líneas presupuestales para este mes.
                 </td>
               </tr>
