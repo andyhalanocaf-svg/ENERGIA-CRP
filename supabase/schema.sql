@@ -110,6 +110,7 @@ create table public.budget_lines (
   partida         text not null,
   description     text,
   responsible     text,
+  ciudad_planta   text,
   category        char(1) not null default 'A' check (category in ('A', 'B')),
   budget_jan      numeric(15,2) not null default 0,
   budget_feb      numeric(15,2) not null default 0,

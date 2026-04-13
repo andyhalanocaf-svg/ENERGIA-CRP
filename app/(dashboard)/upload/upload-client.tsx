@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils"
 
 // ─── Main Client Component ────────────────────────────────
 export function UploadClient() {
+  const [uploadType, setUploadType] = useState<"master" | "monthly">("master")
+
   return (
     <div className="space-y-6 animate-fade-up">
       <div>
@@ -18,16 +20,42 @@ export function UploadClient() {
           Subir Archivo <span className="text-gradient-brand">Excel</span>
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Carga el Archivo Maestro de presupuesto en formato .xlsx o .xls
+          Carga el Archivo Maestro o una Plantilla Mensual de seguimiento
         </p>
+      </div>
+
+      {/* Selector de tipo de archivo */}
+      <div className="flex gap-3 p-1 bg-muted/30 rounded-lg w-fit">
+        <button
+          onClick={() => setUploadType("master")}
+          className={cn(
+            "px-4 py-2 text-sm font-medium rounded-md transition-all",
+            uploadType === "master"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Archivo Maestro
+        </button>
+        <button
+          onClick={() => setUploadType("monthly")}
+          className={cn(
+            "px-4 py-2 text-sm font-medium rounded-md transition-all",
+            uploadType === "monthly"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Plantilla Mensual
+        </button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
-          <FileUploadZone />
+          <FileUploadZone uploadType={uploadType} />
         </div>
         <div className="lg:col-span-2">
-          <UploadInstructions />
+          <UploadInstructions uploadType={uploadType} />
         </div>
       </div>
 
@@ -37,13 +65,14 @@ export function UploadClient() {
 }
 
 // ─── Upload Zone ──────────────────────────────────────────
-function FileUploadZone() {
+function FileUploadZone({ uploadType }: { uploadType: "master" | "monthly" }) {
   const [dragOver, setDragOver] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<"idle" | "uploading" | "processing" | "done" | "error">("idle")
   const [progress, setProgress] = useState(0)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = useCallback((f: File) => {
@@ -80,33 +109,52 @@ function FileUploadZone() {
       formData.append("file", file)
       formData.append("year", String(new Date().getFullYear()))
 
-      setProgress(30)
-      const uploadRes = await fetch("/api/upload/excel", { method: "POST", body: formData })
-      if (!uploadRes.ok) {
-        const err = await uploadRes.json()
-        throw new Error(err.error || "Error al subir el archivo")
+      if (uploadType === "monthly") {
+        formData.append("month", String(selectedMonth))
+        
+        setProgress(30)
+        const uploadRes = await fetch("/api/upload/monthly", { method: "POST", body: formData })
+        setProgress(90)
+        
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json()
+          throw new Error(err.error || "Error al procesar la plantilla mensual")
+        }
+
+        const { data } = await uploadRes.json()
+        setProgress(100)
+        setStatus("done")
+        setSuccessMsg(`✓ ${data.updatedCount} líneas actualizadas. ${data.notFoundCount > 0 ? `${data.notFoundCount} no encontradas.` : ""}`)
+      } else {
+        // Flujo original para archivo maestro
+        setProgress(30)
+        const uploadRes = await fetch("/api/upload/excel", { method: "POST", body: formData })
+        if (!uploadRes.ok) {
+          const err = await uploadRes.json()
+          throw new Error(err.error || "Error al subir el archivo")
+        }
+
+        const { data: uploadData } = await uploadRes.json()
+        setProgress(60)
+        setStatus("processing")
+
+        const processRes = await fetch("/api/upload/process", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uploadId: uploadData.id, year: new Date().getFullYear() }),
+        })
+        setProgress(90)
+
+        if (!processRes.ok) {
+          const err = await processRes.json()
+          throw new Error(err.error || "Error al procesar el archivo")
+        }
+
+        const { data: processData } = await processRes.json()
+        setProgress(100)
+        setStatus("done")
+        setSuccessMsg(`✓ ${processData.rowsProcessed} líneas procesadas correctamente`)
       }
-
-      const { data: uploadData } = await uploadRes.json()
-      setProgress(60)
-      setStatus("processing")
-
-      const processRes = await fetch("/api/upload/process", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uploadId: uploadData.id, year: new Date().getFullYear() }),
-      })
-      setProgress(90)
-
-      if (!processRes.ok) {
-        const err = await processRes.json()
-        throw new Error(err.error || "Error al procesar el archivo")
-      }
-
-      const { data: processData } = await processRes.json()
-      setProgress(100)
-      setStatus("done")
-      setSuccessMsg(`✓ ${processData.rowsProcessed} líneas procesadas correctamente`)
     } catch (err) {
       setStatus("error")
       setErrorMsg(err instanceof Error ? err.message : "Error desconocido")
@@ -200,6 +248,29 @@ function FileUploadZone() {
 
       {/* Actions */}
       <div className="flex gap-3">
+        {uploadType === "monthly" && file && status === "idle" && (
+          <div className="flex-1">
+            <label className="text-xs text-muted-foreground mb-1 block">Mes de la plantilla</label>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="w-full h-10 rounded-md border border-border bg-card px-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+            >
+              <option value="1">Enero</option>
+              <option value="2">Febrero</option>
+              <option value="3">Marzo</option>
+              <option value="4">Abril</option>
+              <option value="5">Mayo</option>
+              <option value="6">Junio</option>
+              <option value="7">Julio</option>
+              <option value="8">Agosto</option>
+              <option value="9">Septiembre</option>
+              <option value="10">Octubre</option>
+              <option value="11">Noviembre</option>
+              <option value="12">Diciembre</option>
+            </select>
+          </div>
+        )}
         {file && status === "idle" && (
           <button
             id="btn-upload-submit"
@@ -207,7 +278,7 @@ function FileUploadZone() {
             className="flex-1 h-10 rounded-md bg-primary text-primary-foreground text-sm font-semibold
                        hover:opacity-90 hover:[box-shadow:3px_3px_0px_oklch(0.62_0.18_155_/_0.5)] transition-all flex items-center justify-center gap-2"
           >
-            <Upload className="h-4 w-4" /> Subir y Procesar
+            <Upload className="h-4 w-4" /> {uploadType === "monthly" ? "Actualizar Mes" : "Subir y Procesar"}
           </button>
         )}
         {(file || status === "done" || status === "error") && (
@@ -225,16 +296,28 @@ function FileUploadZone() {
 }
 
 // ─── Instrucciones ────────────────────────────────────────
-function UploadInstructions() {
-  const steps = [
+function UploadInstructions({ uploadType }: { uploadType: "master" | "monthly" }) {
+  const masterSteps = [
     { n: "1", text: "Exporta el Archivo Maestro de SAP en formato Excel (.xlsx)" },
     { n: "2", text: "Verifica que la hoja tenga el formato estándar CC231 con columnas de meses" },
     { n: "3", text: "Arrastra o selecciona el archivo en la zona de upload" },
     { n: "4", text: "El sistema procesará las líneas y actualizará el dashboard automáticamente" },
   ]
+
+  const monthlySteps = [
+    { n: "1", text: "Descarga la plantilla mensual del mes que deseas actualizar" },
+    { n: "2", text: "Llena las columnas STATUS, MES REPROGRAMADO y MOTIVO DE VARIACIÓN" },
+    { n: "3", text: "Selecciona el mes correspondiente y arrastra el archivo" },
+    { n: "4", text: "El sistema actualizará el estado de cada línea presupuestal" },
+  ]
+
+  const steps = uploadType === "master" ? masterSteps : monthlySteps
+
   return (
     <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-      <h3 className="text-sm font-semibold text-foreground">Instrucciones</h3>
+      <h3 className="text-sm font-semibold text-foreground">
+        {uploadType === "master" ? "Instrucciones - Archivo Maestro" : "Instrucciones - Plantilla Mensual"}
+      </h3>
       <ol className="space-y-3">
         {steps.map(s => (
           <li key={s.n} className="flex items-start gap-3">
@@ -249,7 +332,9 @@ function UploadInstructions() {
         <div className="flex items-start gap-2">
           <AlertTriangle className="h-3.5 w-3.5 text-amber-400 mt-0.5 shrink-0" />
           <p className="text-xs text-amber-400/90">
-            La carga sobreescribe los datos del año. Sube el archivo completo.
+            {uploadType === "master" 
+              ? "La carga sobreescribe los datos del año. Sube el archivo completo."
+              : "Solo se actualizarán las líneas que coincidan con el presupuesto maestro."}
           </p>
         </div>
       </div>

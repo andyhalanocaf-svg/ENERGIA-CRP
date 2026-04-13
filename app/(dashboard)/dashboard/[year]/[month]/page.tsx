@@ -38,7 +38,7 @@ async function getMonthlyData(year: number, month: number) {
   const { data: budgetLines } = await supabase
     .from("budget_lines")
     .select(`
-      id, cost_center_id, partida, description, responsible, category, ${monthField}
+      id, cost_center_id, partida, description, responsible, ciudad_planta, category, ${monthField}
     `)
     .eq("year", year)
     .order("partida")
@@ -66,7 +66,7 @@ async function getMonthlyData(year: number, month: number) {
       partida: line.partida,
       responsible: line.responsible ?? "Sin asignar",
       description: line.description ?? "-",
-      ciudad_planta: "Corporativo", // Pendiente de migración futura
+      ciudad_planta: line.ciudad_planta ?? "Corporativo",
       category: line.category as "A" | "B",
       budgeted,
       status: exec?.status ?? "pending",

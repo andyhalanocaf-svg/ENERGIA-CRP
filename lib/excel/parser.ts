@@ -5,6 +5,7 @@ export interface ParsedBudgetLine {
   partida: string
   description: string | null
   responsible: string | null
+  ciudad_planta: string | null
   category: "A" | "B"
   budget_jan: number
   budget_feb: number
@@ -82,14 +83,15 @@ export function parseExcelBuffer(buffer: ArrayBuffer, year: number): ParsedBudge
   }
 
   // Detectar cómo se llaman las columnas
-  const fIdLinea = keyMap.get("id_linea") || keyMap.get("linea") || colKeys[0]
+  const fIdLinea = keyMap.get("id_linea") || keyMap.get("linea") || keyMap.get("id linea") || colKeys[0]
   const fResponsable = keyMap.get("responsable") || keyMap.get("area")
   const fPartida = keyMap.get("partida presupuestal") || keyMap.get("partida")
   const fArticulo = keyMap.get("articulo") || keyMap.get("artículo")
-  const fDetalle = keyMap.get("detalle") || keyMap.get("descripcion")
-  const fMes = keyMap.get("mes") || keyMap.get("periodo")
+  const fDetalle = keyMap.get("detalle") || keyMap.get("descripcion") || keyMap.get("descripción")
+  const fCiudadPlanta = keyMap.get("ciudad/planta") || keyMap.get("ciudad") || keyMap.get("planta") || keyMap.get("contacto")
+  const fMes = keyMap.get("mes") || keyMap.get("periodo") || keyMap.get("mes reprogramado")
   const fImporte = keyMap.get("importe (s/)") || keyMap.get("importe") || keyMap.get("monto")
-  const fCat = keyMap.get("categoria_control") || keyMap.get("categoria")
+  const fCat = keyMap.get("categoria_control") || keyMap.get("categoria") || keyMap.get("categoría")
 
   // Mapa para acumular resultados (Pivot)
   const linesMap = new Map<string, ParsedBudgetLine>()
@@ -121,6 +123,7 @@ export function parseExcelBuffer(buffer: ArrayBuffer, year: number): ParsedBudge
         partida: uniqueKey.substring(0, 500), // Usamos ID_LINEA en la BD de forma estricta para evitar conflictos de únicas
         description: description.substring(0, 1000),
         responsible: row[fResponsable ?? ""] ? String(row[fResponsable!]).trim().substring(0, 200) : null,
+        ciudad_planta: row[fCiudadPlanta ?? ""] ? String(row[fCiudadPlanta!]).trim().substring(0, 200) : null,
         category,
         budget_jan: 0, budget_feb: 0, budget_mar: 0,
         budget_apr: 0, budget_may: 0, budget_jun: 0,
