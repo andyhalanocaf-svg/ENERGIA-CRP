@@ -1,5 +1,5 @@
 import 'server-only'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, TaskType } from '@google/generative-ai'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // ======================================================
@@ -30,12 +30,7 @@ function getGenAI(): GoogleGenerativeAI {
  */
 export async function generateEmbedding(
   text: string,
-  taskType:
-    | 'RETRIEVAL_DOCUMENT'
-    | 'RETRIEVAL_QUERY'
-    | 'SEMANTIC_SIMILARITY'
-    | 'CLASSIFICATION'
-    | 'CLUSTERING' = 'RETRIEVAL_DOCUMENT'
+  taskType: TaskType = TaskType.RETRIEVAL_DOCUMENT
 ): Promise<number[]> {
   const genAI = getGenAI()
   const model = genAI.getGenerativeModel({ model: EMBEDDING_MODEL })
@@ -68,7 +63,7 @@ export async function searchKnowledgeBase(
   let embedding: number[]
 
   try {
-    embedding = await generateEmbedding(query, 'RETRIEVAL_QUERY')
+    embedding = await generateEmbedding(query, TaskType.RETRIEVAL_QUERY)
   } catch (e) {
     console.error('[Embeddings] Error generando embedding con Gemini:', e)
     return []

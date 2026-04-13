@@ -10,7 +10,8 @@ export const loginSchema = z.object({
 export const inviteUserSchema = z.object({
   email: z.string().email('Email inválido').toLowerCase().trim(),
   role: z.enum(['admin', 'analyst', 'viewer'], {
-    errorMap: () => ({ message: 'Rol inválido' }),
+    required_error: 'Rol requerido',
+    invalid_type_error: 'Rol inválido',
   }),
 })
 

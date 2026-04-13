@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
   if (error) return apiError(error.message, 500)
 
   // Construir datos para Excel
-  const rows = (lines ?? []).map(line => {
+  const linesArray = (lines ?? []) as any[];
+
+  const rows = linesArray.map(line => {
     const row: Record<string, unknown> = {
       "Partida":      line.partida,
       "Descripción":  line.description ?? "",
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest) {
       "Categoría":    line.category,
     }
     ;(MONTH_KEYS as unknown as string[]).forEach((field, i) => {
-      row[MONTHS_SHORT_ES[i]] = (line as Record<string, number>)[field] ?? 0
+      row[MONTHS_SHORT_ES[i]] = line[field] ?? 0
     })
     row["Total Anual"] = line.total_annual ?? 0
     return row
@@ -41,11 +43,11 @@ export async function GET(request: NextRequest) {
   // Fila de totales
   const totalsRow: Record<string, unknown> = { "Partida": "TOTAL", "Descripción": "", "Responsable": "", "Categoría": "" }
   ;(MONTH_KEYS as unknown as string[]).forEach((field, i) => {
-    totalsRow[MONTHS_SHORT_ES[i]] = (lines ?? []).reduce(
-      (s, l) => s + ((l as Record<string, number>)[field] ?? 0), 0
+    totalsRow[MONTHS_SHORT_ES[i]] = linesArray.reduce(
+      (s, l) => s + (l[field] ?? 0), 0
     )
   })
-  totalsRow["Total Anual"] = (lines ?? []).reduce((s, l) => s + (l.total_annual ?? 0), 0)
+  totalsRow["Total Anual"] = linesArray.reduce((s, l) => s + (l.total_annual ?? 0), 0)
   rows.push(totalsRow)
 
   // Generar Excel con SheetJS
